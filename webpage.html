@@ -636,12 +636,10 @@
         <div class="nav-container">
             <a href="#" class="nav-logo">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="24" height="24" rx="4" fill="white"/>
-                    <path d="M6 12H18" stroke="#004A8F" stroke-width="2"/>
-                    <path d="M6 8H18" stroke="#004A8F" stroke-width="2"/>
-                    <path d="M6 16H18" stroke="#004A8F" stroke-width="2"/>
+                    <img src="qshell_logo.png" alt="QShell Logo" class="loading-logo">
+
                 </svg>
-                QShell Banking
+                QShell 
             </a>
             <div class="nav-links">
                 <a href="#" class="nav-link">Home</a>
@@ -667,40 +665,36 @@
         <div class="page-layout">
             <div class="explanation-section">
                 <h2>QShell Transaction System</h2>
-                <p>Welcome to the QShell secure transaction interface. This system allows users to:</p>
+                <p>Welcome to the QShell secure transaction interface.</p>
                 <ul>
-                    <li>Register with a unique username</li>
-                    <li>Send secure transactions to other registered users</li>
-                    <li>View real-time transaction history</li>
-                    <li>Monitor encrypted transaction status</li>
+                    <li>Quantum computers are touted to break encryption by 2031.</li>
+                    <li>Our system is resistant to quantum computing hacking software.</li>
+                    <li>Our product is the encrpytion software displayed below on the black green screen.</li>
+                    <li>Can send over mock encrypted transaction to demonstrate.</li>
                 </ul>
 
                 <h2>How It Works</h2>
                 <p>The system operates through these steps:</p>
                 <ul>
-                    <li><strong>Registration:</strong> Enter your username to join the system</li>
-                    <li><strong>Transaction:</strong> Select a recipient and enter the amount</li>
-                    <li><strong>Verification:</strong> Each transaction is encrypted and verified</li>
-                    <li><strong>Confirmation:</strong> Real-time updates show transaction status</li>
+                    <li><strong>Sender side:</strong>
+                        # sending public_key to [recipient]
+                        
+                        # open ciphertext from [recipient]
+                        
+                        # Get the same secret password from ciphertext
+                        
+                        # money is sent using secret password</li>
+                    <li><strong>Recipient side:</strong> 
+                        #receiving public_key from [sender]
+                        
+                        # using public_key to create shared_secret
+                        
+                        # ciphertext the shared_secret
+                        
+                        # send ciphertext to [sender]
+                        
+                        # money is received using secret password</li>
                 </ul>
-
-                <h2>Security Features</h2>
-                <p>Your transactions are protected by:</p>
-                <ul>
-                    <li>WebSocket secure connections</li>
-                    <li>Real-time encryption</li>
-                    <li>Transaction verification protocols</li>
-                    <li>Secure user session management</li>
-                </ul>
-
-                <h2>Need Help?</h2>
-                <p>To use this system:</p>
-                <ol>
-                    <li>Enter your username and click "Submit Name"</li>
-                    <li>Select a recipient from the dropdown menu</li>
-                    <li>Enter the amount you wish to send</li>
-                    <li>Click "Send Money" to complete the transaction</li>
-                </ol>
             </div>
 
             <div class="main-container">
@@ -827,8 +821,18 @@
             const amountToAdd = parseInt(amountInput.value);
 
             if (!selectedUser || !amountToAdd || isNaN(amountToAdd)) {
+                alert('Please select a user and enter a valid amount');
                 return;
             }
+
+            // Find current amount for selected user
+            const otherUsersDiv = document.getElementById('otherUsers');
+            const userEntry = Array.from(otherUsersDiv.querySelectorAll('.user-entry'))
+                .find(entry => entry.querySelector('p:first-child').textContent.includes(selectedUser));
+            
+            const currentAmount = userEntry 
+                ? parseInt(userEntry.querySelector('p:nth-child(2)').textContent.split(':')[1].trim() || '0')
+                : 0;
 
             // Add encryption logging
             addEncryptionLog('Initializing Quantum Encryption');
@@ -838,20 +842,6 @@
             setTimeout(() => addEncryptionLog('Encrypting Transaction Data', `Amount: ${amountToAdd}`), 2000);
             setTimeout(() => addEncryptionLog('Verifying Quantum Signature'), 2500);
             setTimeout(() => addEncryptionLog('Transaction Securely Completed', `Recipient: ${selectedUser}`), 3000);
-
-            // Find current amount for selected user in the otherUsers container
-            const otherUsersDiv = document.getElementById('otherUsers');
-            const userEntries = otherUsersDiv.querySelectorAll('.user-entry');
-            let currentAmount = 0;
-            
-            userEntries.forEach(entry => {
-                const username = entry.querySelector('p:first-child').textContent.split(':')[1].trim();
-                if (username === selectedUser) {
-                    currentAmount = parseInt(entry.querySelector('p:nth-child(2)').textContent.split(':')[1].trim()) || 0;
-                }
-            });
-
-            console.log('Sending money:', { selectedUser, amountToAdd, currentAmount }); // Debug log
 
             // Send money update to WebSocket server
             socket.send(JSON.stringify({
@@ -865,12 +855,13 @@
             amountInput.value = '';
         });
 
-        // Create WebSocket connection
-        const socket = new WebSocket(`ws://${window.location.hostname}:8080`);
+        // Update WebSocket connection to use secure protocol
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const socket = new WebSocket(`${protocol}//${window.location.hostname}:${window.location.port}`);
 
         socket.onmessage = function(event) {
             const data = JSON.parse(event.data);
-            console.log('Received websocket message:', data); // Debug log
+            console.log('Received websocket message:', data);
             
             if (data.type === 'users') {
                 // Clear existing users first
@@ -904,38 +895,77 @@
                 otherUsersDiv.appendChild(userEntry);
                 updateUserDropdown();
             } else if (data.type === 'money') {
-                console.log('Processing money update:', data); // Debug log
+                console.log('Processing money update:', data);
                 
-                // Find the user entry in the otherUsers container
-                const otherUsersDiv = document.getElementById('otherUsers');
-                const userEntries = otherUsersDiv.querySelectorAll('.user-entry');
-                
-                userEntries.forEach(entry => {
-                    const usernameElement = entry.querySelector('p:first-child');
-                    const username = usernameElement.textContent.split(':')[1].trim();
-                    console.log('Checking username:', username, 'against recipient:', data.recipientUsername); // Debug log
-                    
-                    if (username === data.recipientUsername) {
-                        const numberElement = entry.querySelector('p:nth-child(2)');
-                        const currentAmount = parseInt(numberElement.textContent.split(':')[1].trim()) || 0;
-                        const newAmount = currentAmount + data.amount;
-                        console.log('Updating amount:', currentAmount, '+', data.amount, '=', newAmount); // Debug log
-                        
-                        numberElement.innerHTML = `<strong>Number:</strong> ${newAmount}`;
-                        
-                        // Show encryption status
-                        const statusElement = entry.querySelector('.encryption-status');
-                        statusElement.style.display = 'block';
-                        statusElement.innerHTML = `Transaction encrypted: <br>${data.encryptedAmount}`;
-                        
-                        // Flash the updated entry
-                        entry.style.backgroundColor = '#ffeb3b';
-                        setTimeout(() => {
-                            entry.style.backgroundColor = '';
-                            statusElement.style.display = 'none';
-                        }, 2000);
+                try {
+                    // Find the specific user entry and update its amount
+                    const otherUsersDiv = document.getElementById('otherUsers');
+                    if (!otherUsersDiv) {
+                        console.error('Could not find otherUsers div');
+                        return;
                     }
-                });
+
+                    const userEntries = otherUsersDiv.querySelectorAll('.user-entry');
+                    if (!userEntries.length) {
+                        console.error('No user entries found');
+                        return;
+                    }
+
+                    let userFound = false;
+                    userEntries.forEach(entry => {
+                        const usernameElement = entry.querySelector('p:first-child');
+                        if (!usernameElement) {
+                            console.error('Username element not found in entry');
+                            return;
+                        }
+
+                        const username = usernameElement.textContent.split(':')[1]?.trim();
+                        if (!username) {
+                            console.error('Could not parse username');
+                            return;
+                        }
+                        
+                        if (username === data.recipientUsername) {
+                            userFound = true;
+                            // Update the number display
+                            const numberElement = entry.querySelector('p:nth-child(2)');
+                            if (!numberElement) {
+                                console.error('Number element not found');
+                                return;
+                            }
+
+                            const newAmount = data.amount;
+                            if (typeof newAmount !== 'number') {
+                                console.error('Invalid amount:', newAmount);
+                                return;
+                            }
+
+                            numberElement.innerHTML = `<strong>Number:</strong> ${newAmount}`;
+                            
+                            // Show encryption status
+                            const statusElement = entry.querySelector('.encryption-status');
+                            if (statusElement) {
+                                statusElement.style.display = 'block';
+                                statusElement.textContent = `Transaction encrypted and verified (${data.encryptedAmount})`;
+                                
+                                // Highlight updated entry
+                                entry.style.transition = 'background-color 0.3s ease';
+                                entry.style.backgroundColor = '#e3f2fd';
+                                setTimeout(() => {
+                                    entry.style.backgroundColor = '';
+                                    statusElement.style.display = 'none';
+                                }, 2000);
+                            }
+                        }
+                    });
+
+                    if (!userFound) {
+                        console.error('Recipient user not found:', data.recipientUsername);
+                    }
+
+                } catch (err) {
+                    console.error('Error processing money update:', err);
+                }
             }
         };
 

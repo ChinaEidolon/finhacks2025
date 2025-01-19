@@ -4,8 +4,25 @@ const app = express();
 const port = 3000;
 const { WebSocketServer } = require('ws');
 const { PythonShell } = require('python-shell');
+const https = require('https');
+const http = require('http');
+const fs = require('fs');
 
+let server;
 
+// Try to read SSL certificates if they exist
+try {
+    const privateKey = fs.readFileSync('path/to/private-key.pem', 'utf8');
+    const certificate = fs.readFileSync('path/to/certificate.pem', 'utf8');
+    const credentials = { key: privateKey, cert: certificate };
+    // Create HTTPS server if certificates are available
+    server = https.createServer(credentials, app);
+    console.log('Running server in HTTPS mode');
+} catch (error) {
+    // Fall back to HTTP if certificates are not available
+    server = http.createServer(app);
+    console.log('Running server in HTTP mode (SSL certificates not found)');
+}
 
 // Serve static files from the current directory
 app.use(express.static(__dirname));
@@ -15,15 +32,16 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'webpage.html'));
 });
 
-// Start the server
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+// Start the server (works for both HTTP and HTTPS)
+server.listen(port, () => {
+    const protocol = server instanceof https.Server ? 'https' : 'http';
+    console.log(`Server running at ${protocol}://localhost:${port}`);
 });
 
-
+// Create WebSocket server attached to the server
 const wss = new WebSocketServer({ 
-    port: 8080,
-    host: '0.0.0.0'  // Listen on all available network interfaces
+    server: server,
+    host: '0.0.0.0'
 });
 
 const clients = new Set();
@@ -68,21 +86,20 @@ wss.on('connection', (ws) => {
                         return;
                     }
                     
-                    console.log('Python Results:', results); // Debug log
+                    console.log('Python Results:', results);
                     
                     if (results && results.length >= 2) {
                         const encryptedAmount = results[results.length - 2];
                         const decryptedAmount = parseInt(results[results.length - 1]);
                         
-                        // Broadcast to all clients to ensure everyone's display updates
+                        // Broadcast to ALL connected clients
                         clients.forEach(client => {
-                            if (client.readyState === 1) {
+                            if (client.readyState === 1) {  // Check if client connection is open
                                 client.send(JSON.stringify({
                                     type: 'money',
                                     recipientUsername: data.recipientUsername,
                                     amount: decryptedAmount,
-                                    encryptedAmount: encryptedAmount,
-                                    currentAmount: data.currentAmount || 0
+                                    encryptedAmount: encryptedAmount
                                 }));
                             }
                         });
