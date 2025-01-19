@@ -36,6 +36,7 @@ wss.on('connection', (ws) => {
 
     ws.on('message', async (message) => {
         const data = JSON.parse(message);
+        console.log('Received message:', data); // Debug log
         
         if (data.type === 'username') {
             ws.username = data.username;
@@ -70,14 +71,15 @@ wss.on('connection', (ws) => {
                         const encryptedAmount = results[results.length - 2];
                         const decryptedAmount = parseInt(results[results.length - 1]);
                         
-                        // Broadcast to all clients
+                        // Broadcast to all clients to ensure everyone's display updates
                         clients.forEach(client => {
-                            if (client.username === data.username && client.readyState === 1) {
+                            if (client.readyState === 1) {
                                 client.send(JSON.stringify({
                                     type: 'money',
-                                    username: data.username,
+                                    recipientUsername: data.recipientUsername,
                                     amount: decryptedAmount,
-                                    encryptedAmount: encryptedAmount
+                                    encryptedAmount: encryptedAmount,
+                                    currentAmount: data.currentAmount || 0
                                 }));
                             }
                         });
