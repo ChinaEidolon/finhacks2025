@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Input Form</title>
+    <style>
+        .form-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="display: flex; justify-content: space-around;">
+        <div class="form-container">
+            <form id="userForm">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <button type="button" id="submitName">Submit Name</button>
+
+                <div class="form-group">
+                    <label for="number">Enter a number:</label>
+                    <input type="number" id="number" name="number" required>
+                </div>
+                <button type="button" id="sendMoney">Send Money</button>
+            </form>
+        </div>
+        <div class="form-container">
+            <h3>Other Users</h3>
+            <div id="otherUsers">
+                <div class="user-entry">
+                    <p><strong>Username:</strong> John</p>
+                    <p><strong>Number:</strong> 42</p>
+                </div>
+                <div class="user-entry">
+                    <p><strong>Username:</strong> Sarah</p>
+                    <p><strong>Number:</strong> 17</p>
+                </div>
+                <div class="user-entry">
+                    <p><strong>Username:</strong> Mike</p>
+                    <p><strong>Number:</strong> 89</p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+   
+    <label for="users_label">Choose a user:</label>
+    <select name="users" id="users_dropdown">
+        <script>
+            const usersOnline = document.getElementById('otherUsers').querySelectorAll('.user-entry');
+            usersOnline.forEach(entry => {
+                const username = entry.querySelector('p:first-child').textContent.split(':')[1].trim();
+                document.write(`<option value="${username}">${username}</option>`);
+            });
+        </script>
+    </select>
+
+
+    <script>
+
+
+        function updateUserDropdown(){ // once we touch the submit button we will update the dropdown to include the new information
+            const selectElement = document.getElementById('users_dropdown');
+            selectElement.innerHTML = ''; // Clear existing options
+
+            const userEntries = document.querySelectorAll('.user-entry');
+
+
+            userEntries.forEach(entry => {
+                const username = entry.querySelector('p:first-child').textContent.split(':')[1].trim();
+                const option = document.createElement('option');
+                option.value = username;
+                option.textContent = username;
+                selectElement.appendChild(option);
+            });
+        }
+
+        updateUserDropdown();
+
+        document.getElementById('submitName').addEventListener('click', function() {
+            const username = document.getElementById('username').value;
+            
+            const userEntry = document.createElement('div');
+            userEntry.className = 'user-entry';
+            userEntry.innerHTML = `
+                <p><strong>Username:</strong> ${username}</p>
+                <p><strong>Number:</strong> 0</p>
+            `;
+            
+            document.getElementById('otherUsers').appendChild(userEntry);
+            document.getElementById('userForm').reset();
+            
+            updateUserDropdown();
+        });
+
+        document.getElementById('sendMoney').addEventListener('click', function() {
+            const selectedUser = document.getElementById('users_dropdown').value;
+            const amountToAdd = parseInt(document.getElementById('number').value);
+
+            const userEntries = document.querySelectorAll('.user-entry');
+            userEntries.forEach(entry => {
+                const username = entry.querySelector('p:first-child').textContent.split(':')[1].trim();
+                if(username === selectedUser){
+                    const numberElement = entry.querySelector('p:last-child');
+                    const currentNumber = parseInt(numberElement.textContent.split(':')[1]);
+                    const newNumber = currentNumber + amountToAdd;
+                    
+                    numberElement.innerHTML = `<strong>Number:</strong> ${newNumber}`;
+                }
+            });
+
+            document.getElementById('userForm').reset();
+        });
+
+
+
+    </script>
+</body>
+
+</html>
