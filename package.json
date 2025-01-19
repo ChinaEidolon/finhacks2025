@@ -9,6 +9,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "express": "^4.21.2",
     "python-shell": "^5.0.0",
     "ws": "^8.18.0"
   }
