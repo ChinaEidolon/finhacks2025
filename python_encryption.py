@@ -239,7 +239,7 @@ hybrid_encryption_demo_with_hacking()
 # Keypair generate creates asymmetric keys. Public/Private
 # shares the secret generation by creating a symmetric key 
 
-
+ 
 # visually display this on the webpage
 
 
