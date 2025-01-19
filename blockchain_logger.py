@@ -57,8 +57,9 @@ class BlockchainLogger:
         # Encode the contract method call
         contract_txn = contract.functions.logTransaction(data_bytes).build_transaction(
             {
+                "from": account.address,  # Explicitly specify the sender
                 "nonce": nonce,
-                "gas": 100000,
+                "gas": 100000,  # Fixed gas value
                 "gasPrice": self.web3.eth.gas_price,
                 "value": public_amount,
                 "chainId": self.web3.eth.chain_id,
