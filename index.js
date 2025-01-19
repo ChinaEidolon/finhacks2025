@@ -21,7 +21,10 @@ app.listen(port, () => {
 });
 
 
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({ 
+    port: 8080,
+    host: '0.0.0.0'  // Listen on all available network interfaces
+});
 
 const clients = new Set();
 
