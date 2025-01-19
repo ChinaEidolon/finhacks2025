@@ -48,6 +48,9 @@
 <body>
     <div style="display: flex; justify-content: space-around;">
         <div class="form-container">
+            <div id="currentUser" style="display: none; margin-bottom: 15px;">
+                <h3>Current User: <span id="currentUsername"></span></h3>
+            </div>
             <form id="userForm">
                 <div class="form-group">
                     <label for="username">Username:</label>
@@ -65,18 +68,6 @@
         <div class="form-container">
             <h3>Other Users</h3>
             <div id="otherUsers">
-                <div class="user-entry">
-                    <p><strong>Username:</strong> John</p>
-                    <p><strong>Number:</strong> 42</p>
-                </div>
-                <div class="user-entry">
-                    <p><strong>Username:</strong> Sarah</p>
-                    <p><strong>Number:</strong> 17</p>
-                </div>
-                <div class="user-entry">
-                    <p><strong>Username:</strong> Mike</p>
-                    <p><strong>Number:</strong> 89</p>
-                </div>
             </div>
         </div>
         
@@ -118,6 +109,20 @@
         document.getElementById('submitName').addEventListener('click', function() {
             const username = document.getElementById('username').value;
             
+            // Display current user
+            document.getElementById('currentUser').style.display = 'block';
+            document.getElementById('currentUsername').textContent = username;
+            
+            // Disable username input and submit button after submission
+            document.getElementById('username').disabled = true;
+            document.getElementById('submitName').disabled = true;
+            
+            // Send username to WebSocket server
+            socket.send(JSON.stringify({
+                type: 'username',
+                username: username
+            }));
+            
             const userEntry = document.createElement('div');
             userEntry.className = 'user-entry';
             userEntry.innerHTML = `
@@ -126,31 +131,99 @@
             `;
             
             document.getElementById('otherUsers').appendChild(userEntry);
-            document.getElementById('userForm').reset();
-            
             updateUserDropdown();
         });
 
         document.getElementById('sendMoney').addEventListener('click', function() {
             const selectedUser = document.getElementById('users_dropdown').value;
-            const amountToAdd = parseInt(document.getElementById('number').value);
+            const amountInput = document.getElementById('number');
+            const amountToAdd = parseInt(amountInput.value);
 
-            const userEntries = document.querySelectorAll('.user-entry');
-            userEntries.forEach(entry => {
-                const username = entry.querySelector('p:first-child').textContent.split(':')[1].trim();
-                if(username === selectedUser){
-                    const numberElement = entry.querySelector('p:last-child');
-                    const currentNumber = parseInt(numberElement.textContent.split(':')[1]);
-                    const newNumber = currentNumber + amountToAdd;
-                    
-                    numberElement.innerHTML = `<strong>Number:</strong> ${newNumber}`;
-                }
-            });
+            if (!selectedUser) {
+                alert('Please select a user to send money to');
+                return;
+            }
 
-            document.getElementById('userForm').reset();
+            if (!amountToAdd || isNaN(amountToAdd)) {
+                alert('Please enter a valid number');
+                return;
+            }
+
+            // Show loading state
+            const sendButton = this;
+            sendButton.disabled = true;
+            sendButton.textContent = 'Encrypting...';
+
+            // Send money update to WebSocket server
+            socket.send(JSON.stringify({
+                type: 'money',
+                username: selectedUser,
+                amount: amountToAdd
+            }));
+
+            // Reset form and button
+            setTimeout(() => {
+                amountInput.value = '';
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send Money';
+            }, 1000);
         });
 
+        // Create WebSocket connection
+        const socket = new WebSocket('ws://localhost:8080');
 
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('Received websocket message:', data); // Debug log
+            
+            if (data.type === 'users') {
+                // Handle initial users list
+                data.users.forEach(username => {
+                    if (username) {
+                        const userEntry = document.createElement('div');
+                        userEntry.className = 'user-entry';
+                        userEntry.innerHTML = `
+                            <p><strong>Username:</strong> ${username}</p>
+                            <p><strong>Number:</strong> 0</p>
+                            <p class="encryption-status" style="display: none;">Transaction encrypted and verified</p>
+                        `;
+                        document.getElementById('otherUsers').appendChild(userEntry);
+                    }
+                });
+                updateUserDropdown();
+            } else if (data.type === 'username') {
+                // Handle new user
+                const userEntry = document.createElement('div');
+                userEntry.className = 'user-entry';
+                userEntry.innerHTML = `
+                    <p><strong>Username:</strong> ${data.username}</p>
+                    <p><strong>Number:</strong> 0</p>
+                    <p class="encryption-status" style="display: none;">Transaction encrypted and verified</p>
+                `;
+                document.getElementById('otherUsers').appendChild(userEntry);
+                updateUserDropdown();
+            } else if (data.type === 'money') {
+                console.log('Processing money update:', data); // Debug log
+                const userEntries = document.querySelectorAll('.user-entry');
+                userEntries.forEach(entry => {
+                    const username = entry.querySelector('p:first-child').textContent.split(':')[1].trim();
+                    if (username === data.username) {
+                        const numberElement = entry.querySelector('p:nth-child(2)');
+                        const currentAmount = parseInt(numberElement.textContent.split(':')[1].trim()) || 0;
+                        const newAmount = currentAmount + data.amount;
+                        numberElement.innerHTML = `<strong>Number:</strong> ${newAmount}`;
+                        
+                        // Show encryption status
+                        const statusElement = entry.querySelector('.encryption-status');
+                        statusElement.style.display = 'block';
+                        statusElement.textContent = `Transaction encrypted (${data.encryptedAmount}) and verified`;
+                        setTimeout(() => {
+                            statusElement.style.display = 'none';
+                        }, 3000);
+                    }
+                });
+            }
+        };
 
     </script>
 </body>

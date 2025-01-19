@@ -7,5 +7,9 @@
   },
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "python-shell": "^5.0.0",
+    "ws": "^8.18.0"
+  }
 }

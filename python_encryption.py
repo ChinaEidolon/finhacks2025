@@ -263,3 +263,52 @@ hybrid_encryption_demo_with_hacking()
 
 
 
+
+# generate random seed for matrix A
+# create private key
+# create public key
+# alice keeps s private, shares public_key with Bob
+
+# bob takes alice's key
+# uses a seed to generate matrix A
+# generates private key
+# creates shared secret key, sends ciphertext to alice
+
+
+# Websocket connection over to display information.
+
+# sender side:
+# sending public_key to [recipient]
+# open ciphertext from [recipient]
+# Get the same secret password from ciphertext
+# money is sent using secret password
+
+
+# recipient side:
+# receiving public_key from [sender]
+# using public_key to create shared_secret
+# ciphertext the shared_secret
+# send ciphertext to [sender]
+# money is received using secret password
+
+
+if __name__ == "__main__":
+    import sys
+    
+    # Get amount from command line argument
+    amount = sys.argv[1]
+    
+    # Perform encryption
+    kyber = SimplifiedKyber()
+    public_key, private_key = kyber.generate_keypair()
+    ciphertext, shared_secret_sender = kyber.encapsulate(public_key)
+    shared_secret_receiver = kyber.decapsulate(ciphertext, private_key)
+    
+    # Encrypt and decrypt the amount
+    encrypted_data = aes_encrypt(amount, shared_secret_receiver)
+    decrypted_amount = aes_decrypt(encrypted_data, shared_secret_sender)
+    
+    # Print results for Node.js to capture
+    print(encrypted_data)
+    print(decrypted_amount)
+
